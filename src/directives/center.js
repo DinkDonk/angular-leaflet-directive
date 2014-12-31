@@ -99,6 +99,7 @@ angular.module("leaflet-directive").directive('center',
                 }
 
                 leafletScope.$watch("center", function(center) {
+                    var shouldUpdate = true;
                     //$log.debug("updated center model...");
                     // The center from the URL has priority
                     if (isDefined(urlCenterHash)) {
@@ -109,7 +110,8 @@ angular.module("leaflet-directive").directive('center',
                     if (!isValidCenter(center) && center.autoDiscover !== true) {
                         $log.warn("[AngularJS - Leaflet] invalid 'center'");
                         //map.setView([defaults.center.lat, defaults.center.lng], defaults.center.zoom);
-                        return;
+                        shouldUpdate = false;
+                        //return;
                     }
 
                     if (center.autoDiscover === true) {
@@ -123,22 +125,26 @@ angular.module("leaflet-directive").directive('center',
                         } else {
                             map.locate({ setView: true });
                         }
-                        return;
+                        shouldUpdate = false;
+                        //return;
                     }
 
                     if (mapReady && isSameCenterOnMap(center, map)) {
                         //$log.debug("no need to update map again.");
-                        return;
+                        shouldUpdate = false;
+                        //return;
                     }
 
-                    //$log.debug("updating map center...", center);
-                    leafletScope.settingCenterFromScope = true;
-                    map.setView([center.lat, center.lng], center.zoom);
-                    leafletEvents.notifyCenterChangedToBounds(leafletScope, map);
-                    $timeout(function() {
-                        leafletScope.settingCenterFromScope = false;
-                        //$log.debug("allow center scope updates");
-                    });
+                    if (shouldUpdate) {
+                        //$log.debug("updating map center...", center);
+                        leafletScope.settingCenterFromScope = true;
+                        map.setView([center.lat, center.lng], center.zoom);
+                        leafletEvents.notifyCenterChangedToBounds(leafletScope, map);
+                        $timeout(function() {
+                            leafletScope.settingCenterFromScope = false;
+                            //$log.debug("allow center scope updates");
+                        });
+                    }
                 }, true);
 
                 map.whenReady(function() {
